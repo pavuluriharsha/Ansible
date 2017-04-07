@@ -1,0 +1,22 @@
+---
+  - name: app updater
+    hosts: rhel7
+
+    tasks:
+      - name: stop application
+        systemd:
+          name: httpd.service
+          state: stopped
+          enabled: yes
+
+      - name: refresh yum cache
+        yum:
+          state: latest
+          update_cache: yes
+          name: httpd
+
+      - name: restart the service
+        systemd:
+          name: httpd.service
+          state: started
+          enabled: yes
