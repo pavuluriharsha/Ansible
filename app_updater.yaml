@@ -12,7 +12,7 @@
       - name: refresh yum cache
         yum:
           state: latest
-          update_cache: yes
+#          update_cache: yes
           name: httpd
 
       - name: restart the service
