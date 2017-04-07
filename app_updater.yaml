@@ -1,6 +1,6 @@
 ---
   - name: app updater
-    hosts: rhel7
+    hosts: RHEL7
 
     tasks:
       - name: stop application
