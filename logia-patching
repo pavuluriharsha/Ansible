@@ -1,0 +1,48 @@
+---
+ - name: Logia Hosts  
+     hosts: Logia
+     gather_facts: true
+     become_method: sudo
+     become_user: jboss
+	
+	tasks:
+      - name: Stopping the Application
+        command: bash /apps/scripts/jboss-node.sh stop  > /dev/null 2>&1 
+	
+  - name: Logia Hosts	
+    hosts: all
+    become_method: sudo
+    become_user: root
+ 
+    tasks:
+      – name: Verify application/database processes are not running
+        shell: if ps -eaf | egrep 'jboss|oracle|mware'|grep -v grep > /dev/null ;then echo ‘process_running’;else echo ‘process_not_running’;fi
+        ignore_errors: true
+        register: app_process_check   
+	
+      – name: Decision point to start patching
+        fail: msg=”{{ inventory_hostname }} have running Application.Please stop the application first, then attempt patching.”
+        when: app_process_check.stdout == “process_running”	
+   
+      - name: Install updates
+        when: ansible_os_family == "RedHat"
+        yum: name=* state=latest update_cache=yes
+	
+      - name: Restart server
+        command: shutdown -r now "Reboot triggered by Ansible"
+        async: 0
+        poll: 0
+	    register: reboot_started
+        ignore_errors: true
+	
+      – name: Pause for 180 secs
+        pause:
+        minutes: 3	
+
+      - name: Wait for server to restart
+        local_action: wait_for host={{ inventory_hostname }}
+                       state=started 
+                       port=22 
+                       delay=15
+                       timeout=300 
+                       connect_timeout=15
